@@ -1,0 +1,27 @@
+{
+  "guard": {
+    "architecture": "sentence-transformers/all-MiniLM-L6-v2",
+    "layers": 6,
+    "learning_rate": 0.00002,
+    "weight_decay": 0.01,
+    "batch_size": 32,
+    "optimization_steps": 1000,
+    "loss": "huber"
+  },
+  "runtime": {
+    "intervention_threshold": 0.45,
+    "fail_closed": true,
+    "rescore_corrected_action": true
+  },
+  "skill_evolution": {
+    "maximum_component_edits": 3,
+    "ppo_clip_epsilon": 0.2,
+    "validation_rollouts": 8,
+    "require_all_actions_below_threshold": true,
+    "allow_utility_regression": false,
+    "require_independent_verifier": true
+  },
+  "guard_refinement": {
+    "margin": 0.1
+  }
+}

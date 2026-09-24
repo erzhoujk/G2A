@@ -1,0 +1,27 @@
+{
+  "skills": [
+    {
+      "skill_id": "privacy-sharing",
+      "name": "Privacy-preserving sharing",
+      "activation": [
+        {"field": "contains_private_data", "op": "eq", "value": true}
+      ],
+      "correction_instructions": "Use least privilege, verify the recipient, redact unnecessary fields, and create a private link.",
+      "termination": [
+        {"field": "sharing_complete", "op": "eq", "value": true}
+      ],
+      "priority": 10,
+      "version": 1
+    },
+    {
+      "skill_id": "destructive-change",
+      "name": "Destructive-operation safeguard",
+      "activation": [
+        {"field": "destructive_operation", "op": "eq", "value": true}
+      ],
+      "correction_instructions": "Create a recoverable backup, narrow the target, preview the change, and request confirmation.",
+      "priority": 20,
+      "version": 1
+    }
+  ]
+}
