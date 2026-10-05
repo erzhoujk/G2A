@@ -35,6 +35,10 @@ loss:
 
 ```text
 max(0, risk(corrected) - risk(original) + margin).
+
+The Guard module also exposes the paper's arithmetic-mean trajectory aggregation
+and a deterministic validation-threshold calibration helper. Action-level and
+trajectory-level thresholds should be calibrated independently.
 ```
 
 ### 3. Structured Safety Skills
@@ -91,6 +95,10 @@ The paper's learned Guard is complemented by deterministic controls needed in a 
 - risky original actions are never used as fallback;
 - corrections are bounded by `max_skill_attempts` to prevent loops;
 - all decisions are recorded in a SHA-256 hash-chained audit log;
+- accepted second-check corrections are exposed as immutable `InterventionPair`
+  records for independently verified offline Guard refinement;
+- each Skill carries an explicit conservative fallback and Skill pools can be
+  round-tripped as JSON;
 - candidate Skill updates require Guard, utility, rollout, and independent-verifier approval;
 - deployment state is frozen after training/refinement, as specified by the paper.
 

@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import json
+import math
+from dataclasses import dataclass
+from typing import Iterable
 from typing import TYPE_CHECKING, Any, Mapping, Sequence
 
 if TYPE_CHECKING:
@@ -14,6 +17,49 @@ def serialize_guard_input(state: Mapping[str, Any] | str, skill: str, action: st
 
     state_text = state if isinstance(state, str) else json.dumps(state, sort_keys=True, default=str)
     return f"state: {state_text}\nskill: {skill}\naction: {action}"
+
+
+@dataclass(frozen=True, slots=True)
+class RiskThresholds:
+    """Independently calibrated action- and trajectory-level thresholds."""
+
+    action: float
+    trajectory: float
+
+
+def aggregate_trajectory_risk(action_risks: Iterable[float]) -> float:
+    """Compute the paper's arithmetic-mean trajectory risk (Eq. 3 discussion)."""
+
+    values = tuple(float(value) for value in action_risks)
+    if not values:
+        raise ValueError("a trajectory must contain at least one action risk")
+    if not all(math.isfinite(value) for value in values):
+        raise ValueError("action risks must be finite")
+    return math.fsum(values) / len(values)
+
+
+def calibrate_threshold(scores: Iterable[float], labels: Iterable[bool]) -> float:
+    """Select the threshold maximizing binary accuracy on validation scores.
+
+    The action and trajectory thresholds in the paper are calibrated separately;
+    this small dependency-free routine provides a deterministic implementation of
+    that validation step. Ties prefer the more conservative (higher) threshold.
+    """
+
+    pairs = [(float(score), bool(label)) for score, label in zip(scores, labels, strict=True)]
+    if not pairs:
+        raise ValueError("validation data must not be empty")
+    if not all(math.isfinite(score) for score, _ in pairs):
+        raise ValueError("validation scores must be finite")
+    candidates = sorted({score for score, _ in pairs})
+    candidates += [candidates[-1] + 1.0]
+    best = (float("-inf"), float("-inf"))
+    for threshold in candidates:
+        accuracy = sum((score > threshold) == label for score, label in pairs) / len(pairs)
+        key = (accuracy, threshold)
+        if key >= best:
+            best = key
+    return best[1]
 
 
 class MiniLMGuard:

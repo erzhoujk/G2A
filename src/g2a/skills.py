@@ -24,6 +24,7 @@ class SafetySkill:
     priority: int = 0
     version: int = 1
     metadata: Mapping[str, Any] = field(default_factory=dict)
+    fallback_instructions: str = "request clarification or abort the subtask"
 
     def applicable(self, state: Mapping[str, Any]) -> bool:
         return self.activation.matches(state)
@@ -48,6 +49,10 @@ class SafetySkill:
 
     def as_guard_context(self) -> str:
         return f"{self.name}: {self.correction_instructions}"
+
+    def fallback(self) -> str:
+        """Return the conservative fallback mandated by the runtime protocol."""
+        return self.fallback_instructions
 
 
 @dataclass(slots=True)
@@ -98,6 +103,9 @@ class SkillPool:
                         item.get("activation", []), mode=item.get("activation_mode", "all")
                     ),
                     correction_instructions=item["correction_instructions"],
+                    fallback_instructions=item.get(
+                        "fallback_instructions", "request clarification or abort the subtask"
+                    ),
                     termination=ConditionGroup.from_dicts(
                         item.get("termination", []), mode=item.get("termination_mode", "all")
                     ),
@@ -107,3 +115,31 @@ class SkillPool:
                 )
             )
         return pool
+
+    def to_json(self, path: str | Path) -> None:
+        """Persist the schema-valid Skill pool for deployment or review."""
+        payload = {
+            "skills": [
+                {
+                    "skill_id": skill.skill_id,
+                    "name": skill.name,
+                    "activation": [
+                        {"field": c.field, "op": c.op, "value": c.value}
+                        for c in skill.activation.conditions
+                    ],
+                    "activation_mode": skill.activation.mode,
+                    "correction_instructions": skill.correction_instructions,
+                    "fallback_instructions": skill.fallback_instructions,
+                    "termination": [
+                        {"field": c.field, "op": c.op, "value": c.value}
+                        for c in skill.termination.conditions
+                    ],
+                    "termination_mode": skill.termination.mode,
+                    "priority": skill.priority,
+                    "version": skill.version,
+                    "metadata": dict(skill.metadata),
+                }
+                for skill in self.skills.values()
+            ]
+        }
+        Path(path).write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")

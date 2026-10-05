@@ -85,6 +85,8 @@ class G2ARuntime:
         self.policy = policy or PolicyEngine()
         self.config = config or RuntimeConfig()
         self.audit = audit_log or AuditLog()
+        # Verified correction pairs are consumed by the offline refinement stage.
+        self._intervention_pairs: list[object] = []
         self.active_skill_id: str | None = None
         if self.config.freeze_skills:
             self.skills.freeze()
@@ -139,6 +141,16 @@ class G2ARuntime:
                 continue
             if attempt.risk <= self.config.threshold and attempt.revised_action is not None:
                 self.active_skill_id = skill.skill_id
+                from .evolution import InterventionPair
+
+                self._intervention_pairs.append(
+                    InterventionPair(
+                        state=dict(state),
+                        skill=skill.skill_id,
+                        corrected_action=attempt.revised_action,
+                        original_action=proposed_action,
+                    )
+                )
                 return self._decision(
                     DecisionKind.CORRECTED,
                     action=attempt.revised_action,
@@ -150,10 +162,19 @@ class G2ARuntime:
                     attempts=tuple(attempts),
                 )
 
-        reason = (
-            "no applicable Safety Skill" if not candidates else "all corrections remained unsafe"
-        )
+        reason = "no applicable Safety Skill" if not candidates else "all corrections remained unsafe"
+        if candidates:
+            reason += "; conservative fallback: " + candidates[0].fallback()
         return self._block(proposed_action, original_risk, reason, tuple(attempts))
+
+    @property
+    def intervention_pairs(self) -> tuple[object, ...]:
+        """Correction pairs accepted by the second Guard check.
+
+        The returned records are immutable dataclasses and can be passed to the
+        refinement trainer after independent verification.
+        """
+        return tuple(self._intervention_pairs)
 
     def _try_skill(
         self, state: Mapping[str, Any], proposed_action: str, skill: SafetySkill
