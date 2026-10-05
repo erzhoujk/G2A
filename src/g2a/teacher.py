@@ -48,7 +48,7 @@ class QwenTCSDTeacher:
             raise ValueError(f"unsupported torch dtype: {config.torch_dtype}")
         self.tokenizer = AutoTokenizer.from_pretrained(config.model_name, use_fast=True)
         self.model = model or AutoModelForCausalLM.from_pretrained(
-            config.model_name, torch_dtype=dtype, device_map="auto"
+            config.model_name, torch_dtype=dtype, device_map=config.device or "auto"
         )
         self.model.eval()
 
