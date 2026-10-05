@@ -5,6 +5,7 @@ from .runtime import Decision, DecisionKind, G2ARuntime, RuntimeConfig
 from .skills import SafetySkill, SkillPool
 from .tcsd import TCSDEvidence, compute_tcsd_evidence
 from .guard import aggregate_trajectory_risk, calibrate_threshold
+from .environment import ToySharingEnvironment, run_episode
 
 __all__ = [
     "Condition",
@@ -19,6 +20,8 @@ __all__ = [
     "compute_tcsd_evidence",
     "aggregate_trajectory_risk",
     "calibrate_threshold",
+    "ToySharingEnvironment",
+    "run_episode",
 ]
 
 __version__ = "0.1.0"

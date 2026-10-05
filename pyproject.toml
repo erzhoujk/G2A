@@ -20,6 +20,7 @@ dev = ["pytest>=8", "ruff>=0.6"]
 [project.scripts]
 g2a-demo = "g2a.cli:main"
 g2a-train-guard = "g2a.train_guard:main"
+g2a-build-tcsd = "g2a.build_tcsd:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/g2a"]

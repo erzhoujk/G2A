@@ -128,6 +128,26 @@ g2a-train-guard examples/tcsd_examples.jsonl \
   --steps 1000
 ```
 
+To generate the labels directly with the paper's frozen Qwen3-32B teacher,
+prepare JSONL records containing `state`, `skill`, `action`, `safe_reference`,
+and `unsafe_reference`, then run:
+
+```bash
+g2a-build-tcsd examples/teacher_trajectories.jsonl data/tcsd_qwen.jsonl \
+  --model Qwen/Qwen3-32B --dtype bfloat16
+g2a-train-guard data/tcsd_qwen.jsonl \
+  --output checkpoints/g2a-guard-qwen-tcsd.pt --steps 1000
+```
+
+The teacher keeps the realized action token IDs fixed across both references and
+only exposes the resulting length-normalized contrast to the Guard. The
+privileged safe/unsafe references are never serialized into Guard inputs.
+
+For a dependency-free end-to-end runtime smoke test, use
+`ToySharingEnvironment` with the existing CLI corrector; it exercises proposal,
+Guard, Guide correction, second Guard check, environment execution, fallback,
+and audit logging. This toy environment is not a benchmark implementation.
+
 For tests:
 
 ```bash
